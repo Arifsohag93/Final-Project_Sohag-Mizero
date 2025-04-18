@@ -55,10 +55,21 @@ shortened version of your paper, where you will briefly discuss in 3-4
 paragraphs what is the issue/gap in literature, and how the data you
 collected will help answer this gap.
 
+Reliance on renewable energy sources to minimize dependency on fossil fuels is considered one of the strategies to mitigate the global climate change crisis. Several government agencies and international organizations have implemented policies to support renewable energy. In the United States, the Department of Energy; the Department of Transportation, and the Department of Agriculture established the Sustainable Aviation Fuel (SAF) Grand Challenge. An important roadmap of the SAF Grand Challenge is to produce 11.35 billion liters of SAF annually by 2030 and 132.5 billion liters by 2050  (DOE, 2022). The road map places an enormous demand for SAF production, but the demand must be met in light of sustainability and food security. 
+
+Carinata (Brassica carinata), also known as Ethiopian mustard, is a nonfood oilseed crop with a low carbon footprint, and it was listed as an ICAO-approved SAF in 2019.Carinata offers more than just an oilseed crop for SAF production. Its production will provide many ecosystem benefits, such as decreasing weed infestation, increasing beneficial nematodes, and retaining more water for the following crop. carinata can be cultivated in the winter in several areas of the Southeastern United States to create a source of off-season income for growers without displacing food and fiber production. 
+
+Correct timing of fertilizer application is critical because crops require different amounts of nutrients at every growth stage. Since carinata is an emerging crop in the southeast United States, it is very important to know the nutrient recommendation and appropriate fertility recommendation of carinata for successful production in the existing cropping system. To date, the nutrient sufficiency ranges for canola are adopted for carinata production (George et al., 2023). One study was conducted in North Carolina to derive nutrient sufficiency ranges for carinata used in vitro conditions showed that boron deficiency had the greatest impact on the overall production of carinata (Cockson et al., 2021). However, another study conducted in Logan, UT on 36 different plant species showed that the plant and soil values were overestimated in greenhouse conditions than under field conditions(Forero et al., 2019). Thus, the study conducted in North Carolina confirmed that carinata had different tissue concentration levels at different stages, but the nutrient levels could not be readily applied to field conditions.
+Therefore, the main objective of this study is to determine the nutrient-sufficiency range of carinata in the Southeast United States under different field conditions. Only a clear understanding of the deficiency and toxicity of different macro and micronutrients will help us to establish an ideal fertilizer recommendation for carinata in the southeast United States.
+
 # Hypothesis and objectives
 
 Describe here your hypothesis, followed by your objectives. Make sure
 your hypothesis are testable and bold, and objectives are clear.
+
+Hypotheis: Higher nutrient content will icrease carinata yield.
+
+Objective: to determine the nutrient-sufficiency range of carinata in the Southeast United States under different field conditions
 
 # Material and Methods
 
@@ -67,12 +78,33 @@ analysis you will conduct, including study description, site/setup
 description, what equipment was used, etc. just like you would in a
 paper. Make sure to clearly explain what was measured and how.
 
+The study was conducted at the University of Georgia Coastal Plains station in Tifton, GA, and the North Florida Research and Education Center in Live Oak, FL. 
+
+The five treatments were consist of: 
+(a)	Treatment 1 (T1): No fertilizer application, which will serve as the control treatment.
+(b)	Treatment 2 (T2): Fertilizer application following standard recommendation for commercial production of carinata. The fertilizer application will be limited to supplying N, P, K, and S. The rate will depend on soil test analyses, but N application will be limited to 80 lbs/ac. Thus, the two sites may have different rates of P, K, and S depending on the soil test results.
+(c)	Treatment 3 (T3): Fertilizer blend to supply 40 lbs/ac N, 30 lbs/ac P2O5, 30 lbs/ac K2O, 15 lbs/ac Ca, 10 lbs/ac Mg, 10 lbs/ac S, 3 lbs/ac Fe, 3 lbs/ac Mn, 2 lbs/ac Zn, 1 lbs/ac B, and 1 lbs/ac Cu.
+(d)	Treatment 4 (T4): Fertilizer blend to supply 3× the rates specified in T3. 
+(e)	Treatment 5 (T5): Fertilizer blend to supply 6× the rates specified in T3. 
+
+Nujeet 400 carinata hybrid will be planted at a seeding rate of (3-3.5 lbs speed/ac) appropriate to achieve a good stand. 
+
+For the blended fertilizer treatments, 50% of the recommended fertilizer rate for T3, will be applied at the initial stage of the planting. Fertilizer will be incorporated well into the soil. The remaining fertilizer rates, according to the treatment, will be applied in the early spring, shortly after the crops resume growth from the cold season. 
+
+canola settings was applied when combine machine used for harvesting of carinata.
+
 ## Study design
 
 Clearly describe your study design here, including treatment design
 (which factors and levels, the hierarchy among them, etc.), and your
 experimental design (number of reps/blocks, how was randomization
 performed, etc.), as we talked about in class.
+
+The study was set as a RCBD, with the 4 replication.
+
+Number of replicates: 4  
+Number o treatments: 5 fertilizer rate  
+Number of observations: 5 x 4 = 20  
 
 ## Statistical analysis
 
@@ -89,6 +121,12 @@ reproduce your analysis exactly.
 ANOVA model Response variable Explanatory variable How the explanatory
 was treated (random or fixed) alpha level function: package: linear
 model assumptions
+
+Response variable: Carinata seed yield
+Explantory variable: Fertlizer rates
+Fixed factors: fertilizer rate
+random factor: blocks 
+Data was analyzed with a linear mixed model using lme4 package, and the significance level was assesed at p = 0.05
 
 # Results
 

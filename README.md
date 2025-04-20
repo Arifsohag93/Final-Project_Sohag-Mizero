@@ -1,8 +1,9 @@
 # Final-Project_Sohag-Mizero
 To Do List:
-a. create Git hub Final Project
-b. Confirming both of us are able to access in the Git hub repo
-c. Add data and code file
-d. I (Ariful) will add intro, materilas & methods and all the related info about the project since I am using my data I know all the info.
-e. I will add the workflow of the statistiscal analysis later.
-Please Update the To do list whenever it is important.
+a. create Git hub Final Project: Done
+b. Confirming both of us are able to access in the Git hub repo: Confirmed
+c. Add data and code file: Done
+d. I (Ariful) will add intro, materilas & methods and all the related info about the project since I am using my data I know all the info: To be revised
+e. Add the workflow of the statistical analysis and results (Poly).
+f. Creating yield map to help visualize data and add more details to the project. (Poly)
+

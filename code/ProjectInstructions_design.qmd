@@ -193,14 +193,238 @@ Explanatory variable: Fertilizer rates
 
 Fixed factors: fertilizer rate
 
-Random factor: blocks
+Random factor: blocks or replications
 
 Data was analyzed with a linear mixed model using lme4 package, and the
 significance level was assessed at p = 0.05
 
+# Setup
+
+```{r setup, warning=FALSE, message=FALSE}
+# Loading packages
+#install.packages("readxl")
+library(readxl)
+library(tidyverse) # for data wrangling and plotting
+library(janitor)
+library(tidyverse) # for data wrangling and plotting
+library(car) # for Anova function
+library(lme4)
+library(broom) # for model residuals extraction
+library(emmeans) # for model mean extraction
+library(multcomp) # for pairwise comparison letter display
+```
+ 
+
+```{r data import}
+rcbd_df <- read_excel("../data/CRSS_8030_FP.xlsx") 
+
+rcbd_df
+```
+
+# b) EDA tables  
+```{r summary}
+summary(rcbd_df)
+```
+
+```{r glimpse}
+glimpse(rcbd_df)
+```
+# c) Wrangling
 ```{r}
+rcbd_dfw <- rcbd_df %>%
+  clean_names() %>%
+  arrange(rep) %>%
+  group_by(rep) %>%
+  mutate(plot = plot_id) %>%
+  dplyr::select(site, treat, rep, plot, yield_lbac) %>%
+  ungroup()
+  
+
+rcbd_dfw
+```
+
+
+checking if treatment appears once
+```{r}
+rcbd_dfw %>%
+  group_by(site, rep, plot) %>%
+  tally() #%>%
+  #filter(n>1)
+```
+
+```{r}
+rcbd <- rcbd_dfw %>%
+  mutate(rep = factor(rep)
+         )
+rcbd
+```
+
+# EDA plots  
+```{r n boxplot}
+
+ggplot(rcbd, aes(x = treat, 
+                    y = yield_lbac,
+                    color = treat)) +
+  geom_boxplot() +
+  geom_jitter() +
+  theme(legend.position = "none")+
+  facet_wrap(~ site) +  # this splits the graph by site
+  labs(title = "Yield per Treatment by Site",
+       x = "Treatment",
+       y = "Yield (lb/ac)")
+```
+
+# Statistical model
+We treated **blocks as random effect**
+To account for more than one variance component (i.e., random effects and error), we used function `lmer()` from package `lme4`.  
+
+```{r model}
+# Changing to sum-to-zero contrast
+options(contrasts = c("contr.sum", "contr.poly"))
+
+# Model fitting
+rcbd_mix_mod <- lmer(yield_lbac ~ treat + 
+                       (1|rep), 
+                      data =  rcbd)
+
+# Summary
+summary(rcbd_mix_mod)
+
 
 ```
+The variance attributed to blocks is 11.22, and that still left in the residual error is 306719.25. 
+
+Therefore, blocks are responsible for 11.22 / (11.22 + 306719.25) = **0.0037% of the total noise** in this model.
+
+# ANOVA table  
+```{r ANOVA}
+Anova(rcbd_mix_mod, type=3)
+```
+The treatment (treat) are significantly different.
+Considering the main effect of treatment (treat) with p-value = 9.122e-11 (highly significant). This indicates that the different treatment rate has a strong and highly significant effect on yield. Meaning that varying treatment levels significantly impact crop yield.  
+The intercept has p-value: < 2.2e-16 (highly significant). The intercept is significantly different from zero, meaning there is a strong baseline yield when all factors are at their reference levels.
+
+We used REML instead of mean squares. That's why this table is now titled "Analysis of Deviance Table".
+The treatment are significant here, and we should extract means and perform pairwise comparisons for the treatment.
+We are first going to check for model assumptions. To check it fulfills the linear model assumptions.  
+
+Based on the ANOVA table, we should extract means of the treatment (treat) levels, and perform their pairwise comparison.
+This is because the treatment (treat) levels significantly affect yield, and have a stronger effect (p-value = 9.122e-11).
+
+# g) Linear model assumptions  
+## Extracting residuals
+First, let's extract our model residuals, and also create studentized residuals.  
+
+```{r rcbd_mix_resid}
+library(broom.mixed)
+rcbd_mix_resid <- augment(rcbd_mix_mod) %>%
+  mutate(.studresid=rstudent(rcbd_mix_mod))
+
+rcbd_mix_resid
+```
+
+The linear model assumptions:  
+
+- Independence (no pattern)  
+- Variance homogeneity (homoscedasticity)  
+- Normality  
+- Outlier detection (< -3 or > 3)  
+
+
+### Random effects are iid ~ N(0,var_a)  
+```{r randeff_rep}
+randeff_rep <- ranef(rcbd_mix_mod)[[1]]
+
+randeff_rep
+```
+
+For random effects with so few levels (i.e., 4 since that's the number of blocks), the QQ plot is one of the only ways to check for assumptions on random effects.  
+
+```{r QQ plot for random effects}
+ggplot(randeff_rep, aes(sample=`(Intercept)`))+
+  stat_qq(  shape = 21,
+            fill = "purple", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile")+
+  theme_bw()
+```
+Nothing to worry here, especially since we only have 4 points.  
+
+### Within-group errors are iid ~ N(0, var_e)  
+```{r }
+ggplot(rcbd_mix_resid, aes(x=.fitted, y=.studresid))+
+  geom_hline(yintercept = 0, color="red")+
+  geom_point(shape = 21,
+             fill = "purple", 
+             size = 3,
+             alpha = .7)+
+  geom_smooth()+
+  geom_hline(yintercept = c(-3,3), color = "red")+
+  theme_bw()
+```
+
+- **Independence**: The residuals appear fairly randomly scattered without obvious patterns or trends. There is no clear sequential or cyclic patterns visible. The independence assumption is reasonably met.  
+
+- **Variance homoscedastic**: The spread of residuals looks relatively consistent across the range of fitted values. Homoscedasticity is satisfied.
+
+- **Outliers**: No residuals exceed the -3 or +3 threshold (marked by red horizontal lines).  
+
+- **Normality**: Points seem reasonably well-distributed both above and below zero.
+
+```{r residual normality}
+ggplot(rcbd_mix_resid, aes(sample=.studresid))+
+  stat_qq(  shape = 21,
+            fill = "purple", 
+            size = 3,
+            alpha = .7
+  )+
+  stat_qq_line()+
+  labs(x = "Theoretical quantile",
+       y = "Sample quantile")+
+  theme_bw()
+```
+Residuals closely follow the diagonal black line indicating that the residuals are normally distributed.
+Points seem reasonably well-distributed both above and below zero.
+
+```{r density plot}
+ggplot(rcbd_mix_resid, aes(x=.studresid))+
+  geom_density(color = "black",
+               fill = "purple",
+               alpha = .7)+
+  scale_x_continuous(breaks = c(-3,0,3), limits = c(-3,3))+
+  theme_bw()
+
+```
+
+- **Normality**: This plot represents the density distribution of studentized residuals. The peak of the density curve is around 0 which is a good indication that the residuals have a mean close to zero (approximately around -0.5).
+Since the curve shows a bigger peak around 0, it satisfies the assumption that residuals are normally distributed with a mean of zero.
+
+# h) Model means  
+Let's extract the model means.  
+
+Since the treatment (treat) are significantly different, we extracted it by comparing their means.
+```{r treat means}
+rcbd_means_treat <- emmeans(rcbd_mix_mod, ~treat)
+
+rcbd_means_treat
+```
+
+# i) Pairwise comparisons  
+Now that we extracted means, let's perform pairwise comparisons among treatment.  
+
+```{r interaction pwc all}
+rcbd_cld_treat <- cld(rcbd_means_treat, 
+                   reversed=T, 
+                   adjust="none",
+               Letters=letters)
+
+rcbd_cld_treat
+```
+
 
 # Results
 
@@ -223,6 +447,44 @@ If a chunk produces output, like printing a data frame, statistical
 summary, a plot, ANOVA table, etc., make sure to write text interpreting
 what you see and how you can/will use that information to move forward
 to the next steps in the workflow.
+
+# Final plot  
+Let's plot our results, including both **raw data** (to inspect data distribution) and **statistical model summary (i.e., letter separation)** for inference purposes.    
+
+```{r rcbd final plot}
+ggplot(mapping = aes(fill = treat))+
+  # Raw data and boxplots  
+  geom_boxplot(data = rcbd,
+               aes(x = treat, y = yield_lbac),
+               alpha = .8) +
+  geom_jitter(data = rcbd,
+               aes(x = treat, y = yield_lbac),
+              shape = 21,
+              size = 3,
+              alpha = .6) +
+  # Adding letters
+  geom_label(data = rcbd_cld_treat,
+            aes(x = treat, y = emmean, label = .group),
+            fill = "white") +
+  labs(x = "Different treatment levels",
+       y = "Yield (lb/ac)") +
+  scale_fill_viridis_d() +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        legend.position = "none")
+
+```
+
+The letters inside the box plots indicate statistical grouping based on different ttreatments used. The letters indicate significant differences in yield for T5, and T4, while T3, T2, and T1 indicate no significant differences.
+Taking an example from T3, the yield is slightly similar with the yield at T1.
+
+```{r}
+ggsave("../output/rcbd_final_means.png",
+       width = 8,
+       height = 5)
+```
+
+
 
 # Team work in GitHub
 

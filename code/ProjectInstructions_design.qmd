@@ -145,15 +145,15 @@ fertilizer rates, according to the treatment, will be applied in the
 early spring, shortly after the crops resume growth from the cold
 season.
 
--   T1=
+-   T1= Control
 
--   T2=
+-   T2= Standard Treatment
 
--   T3=
+-   T3= Minimum Fertilizer Blending
 
--   T4=
+-   T4= 3X T3
 
--   T5=
+-   T5= 6X T3
 
 canola settings was applied when combine machine used for harvesting of
 carinata.
@@ -191,7 +191,7 @@ Response variable: Carinata seed yield
 
 Explanatory variable: Fertilizer rates
 
-Fixed factors: fertilizer rate
+Fixed factors: fertilizer rate, site
 
 Random factor: blocks or replications
 
@@ -254,7 +254,9 @@ rcbd_dfw %>%
 
 ```{r}
 rcbd <- rcbd_dfw %>%
-  mutate(rep = factor(rep)
+  mutate(rep = factor(rep),
+         yield_kgha = yield_lbac*1.12085,
+         trtname = paste0(treat,"+",site)
          )
 rcbd
 ```
@@ -263,7 +265,7 @@ rcbd
 ```{r n boxplot}
 
 ggplot(rcbd, aes(x = treat, 
-                    y = yield_lbac,
+                    y = yield_kgha,
                     color = treat)) +
   geom_boxplot() +
   geom_jitter() +
@@ -271,7 +273,7 @@ ggplot(rcbd, aes(x = treat,
   facet_wrap(~ site) +  # this splits the graph by site
   labs(title = "Yield per Treatment by Site",
        x = "Treatment",
-       y = "Yield (lb/ac)")
+       y = "Yield (kg/ha)")
 ```
 
 # Statistical model
@@ -283,8 +285,8 @@ To account for more than one variance component (i.e., random effects and error)
 options(contrasts = c("contr.sum", "contr.poly"))
 
 # Model fitting
-rcbd_mix_mod <- lmer(yield_lbac ~ treat + 
-                       (1|rep), 
+rcbd_mix_mod <- lmer(yield_kgha ~ treat * site + 
+                       (1|rep:site), 
                       data =  rcbd)
 
 # Summary
@@ -301,8 +303,9 @@ Therefore, blocks are responsible for 11.22 / (11.22 + 306719.25) = **0.0037% of
 Anova(rcbd_mix_mod, type=3)
 ```
 The treatment (treat) are significantly different.
-Considering the main effect of treatment (treat) with p-value = 9.122e-11 (highly significant). This indicates that the different treatment rate has a strong and highly significant effect on yield. Meaning that varying treatment levels significantly impact crop yield.  
-The intercept has p-value: < 2.2e-16 (highly significant). The intercept is significantly different from zero, meaning there is a strong baseline yield when all factors are at their reference levels.
+The interaction between site and treatment have also significant effect of (p value = 0.001272) on carinata seed yield.Considering the main effect of treatment (treat) with p-value = 2.2e-16 (highly significant). The main effect of site with p-value = 3.493e-06 indicate that two different site have significant effect on carinata seed yield. This indicates that the different treatment rate has a strong and highly significant effect on yield. Meaning that varying treatment levels significantly impact crop yield.  
+The intercept has p-value: < 2.2e-16 (highly significant). The intercept is significantly different from zero, meaning there is a strong baseline yield when all factors are at their reference levels. 
+
 
 We used REML instead of mean squares. That's why this table is now titled "Analysis of Deviance Table".
 The treatment are significant here, and we should extract means and perform pairwise comparisons for the treatment.
@@ -352,7 +355,7 @@ ggplot(randeff_rep, aes(sample=`(Intercept)`))+
        y = "Sample quantile")+
   theme_bw()
 ```
-Nothing to worry here, especially since we only have 4 points.  
+Nothing to worry here, especially since we only have 8 points.  
 
 ### Within-group errors are iid ~ N(0, var_e)  
 ```{r }
@@ -408,21 +411,30 @@ Let's extract the model means.
 
 Since the treatment (treat) are significantly different, we extracted it by comparing their means.
 ```{r treat means}
-rcbd_means_treat <- emmeans(rcbd_mix_mod, ~treat)
+rcbd_means_all <- emmeans(rcbd_mix_mod, ~treat:site)
 
-rcbd_means_treat
+rcbd_means_all
 ```
 
 # i) Pairwise comparisons  
 Now that we extracted means, let's perform pairwise comparisons among treatment.  
 
 ```{r interaction pwc all}
-rcbd_cld_treat <- cld(rcbd_means_treat, 
+rcbd_cld_all <- cld(rcbd_means_all, 
                    reversed=T, 
                    adjust="none",
                Letters=letters)
 
-rcbd_cld_treat
+rcbd_cld_all
+```
+
+```{r}
+rcbd_cld_selected <- rcbd_cld_all %>%
+  as.data.frame() %>%
+  mutate(letter=trimws(.group)) %>%
+  mutate(trtname = paste0(treat,"+",site))
+
+rcbd_cld_selected
 ```
 
 
@@ -452,22 +464,22 @@ to the next steps in the workflow.
 Let's plot our results, including both **raw data** (to inspect data distribution) and **statistical model summary (i.e., letter separation)** for inference purposes.    
 
 ```{r rcbd final plot}
-ggplot(mapping = aes(fill = treat))+
+ggplot(mapping = aes(fill = trtname))+
   # Raw data and boxplots  
   geom_boxplot(data = rcbd,
-               aes(x = treat, y = yield_lbac),
+               aes(x = trtname, y = yield_kgha),
                alpha = .8) +
   geom_jitter(data = rcbd,
-               aes(x = treat, y = yield_lbac),
+               aes(x = trtname, y = yield_kgha),
               shape = 21,
               size = 3,
               alpha = .6) +
   # Adding letters
-  geom_label(data = rcbd_cld_treat,
-            aes(x = treat, y = emmean, label = .group),
+  geom_label(data = rcbd_cld_selected,
+            aes(x = trtname, y = emmean, label = .group),
             fill = "white") +
-  labs(x = "Different treatment levels",
-       y = "Yield (lb/ac)") +
+  labs(x = "Different treatment levels in different site",
+       y = "Yield (kg/ha)") +
   scale_fill_viridis_d() +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.minor.y = element_blank(),
@@ -475,8 +487,7 @@ ggplot(mapping = aes(fill = treat))+
 
 ```
 
-The letters inside the box plots indicate statistical grouping based on different ttreatments used. The letters indicate significant differences in yield for T5, and T4, while T3, T2, and T1 indicate no significant differences.
-Taking an example from T3, the yield is slightly similar with the yield at T1.
+The letters inside the box plots indicate statistical grouping based on different ttreatments used in different site. T5 in Tifton and T5 in Oaks have the highest effect on carinata seed yield production. However, T5 in Tifton and T5 in Oaks have no statistical seed yield difference. T1 in Oaks have the lowest carinata seed yeild. However, T1, T2 and T3 in Oaks have no statistical difference in carinata seed yield production. 
 
 ```{r}
 ggsave("../output/rcbd_final_means.png",

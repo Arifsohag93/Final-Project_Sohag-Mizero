@@ -464,21 +464,41 @@ to the next steps in the workflow.
 Let's plot our results, including both **raw data** (to inspect data distribution) and **statistical model summary (i.e., letter separation)** for inference purposes.    
 
 ```{r rcbd final plot}
-ggplot(mapping = aes(fill = trtname))+
-  # Raw data and boxplots  
+ggplot(mapping = aes(fill = treat)) +
+  # Raw data and boxplots 
   geom_boxplot(data = rcbd,
-               aes(x = trtname, y = yield_kgha),
+               aes(x = treat, y = yield_kgha),
                alpha = .8) +
+  
+  # CI error bars for model means
+  geom_errorbar(data = rcbd_cld_selected,
+                aes(x = treat, y = emmean,
+                    ymin = lower.CL,
+                    ymax = upper.CL),
+                width = 0.2,
+                color = "black") +
+
+  # model means as points
+  geom_point(data = rcbd_cld_selected,
+             aes(x = treat, y = emmean),
+             shape = 21,
+             fill = "white",
+             size = 3,
+             stroke = 0.5) +
+
+  # Raw data jittered
   geom_jitter(data = rcbd,
-               aes(x = trtname, y = yield_kgha),
+              aes(x = treat, y = yield_kgha),
               shape = 21,
               size = 3,
               alpha = .6) +
-  # Adding letters
+  
   geom_label(data = rcbd_cld_selected,
-            aes(x = trtname, y = emmean, label = .group),
-            fill = "white") +
-  labs(x = "Different treatment levels in different site",
+             aes(x = treat, y = emmean, label = .group),
+             fill = "white") +
+
+  facet_wrap(~ site) +
+  labs(x = "Different treatment levels",
        y = "Yield (kg/ha)") +
   scale_fill_viridis_d() +
   theme(panel.grid.major.y = element_blank(),
@@ -495,6 +515,58 @@ ggsave("../output/rcbd_final_means.png",
        height = 5)
 ```
 
+#Interaction plot:
+
+```{r}
+# model-based means and CIs
+emm <- emmeans(rcbd_mix_mod, ~ treat : site)
+emm_df <- as.data.frame(emm)
+interaction_data <- left_join(emm_df, rcbd_cld_selected, 
+                              by = c("treat", "site", "emmean", "lower.CL", "upper.CL"))
+
+# Interaction plot
+ggplot(interaction_data, aes(x = treat, y = emmean, group = site, color = site)) +
+  
+  # Lines connecting points for each site
+  geom_line(linewidth = 1.2) +
+  
+  # Mean points
+  geom_point(size = 4, shape = 21, fill = "white", stroke = 1) +
+
+  # Confidence interval error bars
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2, linewidth = 0.8) +
+  
+  # Significant difference letters (above error bars)
+  geom_text(aes(label = .group, y = upper.CL + 100), 
+            size = 5, fontface = "bold", vjust = 0, color = "black") +
+
+  # Custom colors for locations
+  scale_color_viridis_d(option = "C", begin = 0.1, end = 0.8) +
+
+  # Labels and titles
+  labs(
+    x = "Fertilizer Treatment",
+    y = "Estimated Yield (kg/ha)",
+    title = "Interaction of Fertilizer and Location on Carinata Yield",
+    color = "site"
+  ) +
+
+  # Theme adjustments for publication-quality
+  theme_classic(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    axis.title = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top",
+    panel.grid.minor = element_blank()
+  )
+```
+
+```{r}
+ggsave("../output/rcbd_final_intearction.png",
+       width = 8,
+       height = 5)
+```
 
 
 # Team work in GitHub

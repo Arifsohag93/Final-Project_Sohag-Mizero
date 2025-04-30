@@ -55,7 +55,7 @@ shortened version of your paper, where you will briefly discuss in 3-4
 paragraphs what is the issue/gap in literature, and how the data you
 collected will help answer this gap.
 
-Reliance on renewable energy sources to minimize dependency on fossil
+Introduction: Reliance on renewable energy sources to minimize dependency on fossil
 fuels is considered one of the strategies to mitigate the global climate
 change crisis. Several government agencies and international
 organizations have implemented policies to support renewable energy. In
@@ -63,7 +63,7 @@ the United States, the Department of Energy; the Department of
 Transportation, and the Department of Agriculture established the
 Sustainable Aviation Fuel (SAF) Grand Challenge. An important roadmap of
 the SAF Grand Challenge is to produce 11.35 billion liters of SAF
-annually by 2030 and 132.5 billion liters by 2050 (DOE, 2022). The road
+annually by 2030 and 132.5 billion liters by 2050. The road
 map places an enormous demand for SAF production, but the demand must be
 met in light of sustainability and food security.
 
@@ -83,22 +83,7 @@ carinata is an emerging crop in the southeast United States, it is very
 important to know the nutrient recommendation and appropriate fertility
 recommendation of carinata for successful production in the existing
 cropping system. To date, the nutrient sufficiency ranges for canola are
-adopted for carinata production (George et al., 2023). One study was
-conducted in North Carolina to derive nutrient sufficiency ranges for
-carinata used in vitro conditions showed that boron deficiency had the
-greatest impact on the overall production of carinata (Cockson et al.,
-2021). However, another study conducted in Logan, UT on 36 different
-plant species showed that the plant and soil values were overestimated
-in greenhouse conditions than under field conditions(Forero et al.,
-2019). Thus, the study conducted in North Carolina confirmed that
-carinata had different tissue concentration levels at different stages,
-but the nutrient levels could not be readily applied to field
-conditions. Therefore, the main objective of this study is to determine
-the nutrient-sufficiency range of carinata in the Southeast United
-States under different field conditions. Only a clear understanding of
-the deficiency and toxicity of different macro and micronutrients will
-help us to establish an ideal fertilizer recommendation for carinata in
-the southeast United States.
+adopted for carinata production. One study was conducted in North Carolina to derive nutrient sufficiency ranges for carinata used in vitro conditions showed that boron deficiency had the greatest impact on the overall production of carinata. However, another study conducted in Logan, UT on 36 different plant species showed that the plant and soil values were overestimated in greenhouse conditions than under field conditions. Thus, the study conducted in North Carolina confirmed that carinata had different tissue concentration levels at different stages, but the nutrient levels could not be readily applied to field conditions. Therefore, the main objective of this study is to determine the nutrient-sufficiency range of carinata in the Southeast United States under different field conditions. Only a clear understanding of the deficiency and toxicity of different macro and micronutrients will help us to establish an ideal fertilizer recommendation for carinata in the southeast United States.
 
 # Hypothesis and objectives
 
@@ -107,8 +92,7 @@ your hypothesis are testable and bold, and objectives are clear.
 
 **Hypothesis**: Higher nutrient content will increase carinata yield.
 
-**Objective**: to determine the nutrient-sufficiency range of carinata
-in the Southeast United States under different field conditions
+**Objective**: to determine the nutrient-sufficiency range of carinata in the Southeast United States under different field conditions
 
 # Material and Methods
 
@@ -165,11 +149,11 @@ Clearly describe your study design here, including treatment design
 experimental design (number of reps/blocks, how was randomization
 performed, etc.), as we talked about in class.
 
-The study was set as a RCBD, with the 4 replication.
+The study was set as a RCBD (Randomize complete block design), with the 4 replication.
 
-Number of replicates: 4\
-Number of treatments: 5 fertilizer rate\
-Number of observations: 5 x 4 = 20
+Number of replicates: 4
+Number of treatments: 5 fertilizer rate
+Number of observations: 5 x 4 x 2 (two sites)  = 40
 
 ## Statistical analysis
 
@@ -220,15 +204,17 @@ rcbd_df <- read_excel("../data/CRSS_8030_FP.xlsx")
 
 rcbd_df
 ```
-
+From read csv file, we observe that the data required some clean names.
 # b) EDA tables  
 ```{r summary}
 summary(rcbd_df)
 ```
-
+From the summary of our data we observe that rep is treated as number but we should convert it to factor.
 ```{r glimpse}
 glimpse(rcbd_df)
 ```
+From the glimpse of our data we observe that there are 40 observations (20 from each site), which is correct.
+
 # c) Wrangling
 ```{r}
 rcbd_dfw <- rcbd_df %>%
@@ -242,7 +228,7 @@ rcbd_dfw <- rcbd_df %>%
 
 rcbd_dfw
 ```
-
+After careful observation from the summary data we change the name to clean names and select the important variables required for the analysis.
 
 checking if treatment appears once
 ```{r}
@@ -251,6 +237,7 @@ rcbd_dfw %>%
   tally() #%>%
   #filter(n>1)
 ```
+For better understanding of our data we arranged it by site, rep and plot.
 
 ```{r}
 rcbd <- rcbd_dfw %>%
@@ -260,7 +247,7 @@ rcbd <- rcbd_dfw %>%
          )
 rcbd
 ```
-
+In the above chunk we convert our rep to factor. Also, we convert our yield from lbs/ac to kg/ha.
 # EDA plots  
 ```{r n boxplot}
 
@@ -275,9 +262,10 @@ ggplot(rcbd, aes(x = treat,
        x = "Treatment",
        y = "Yield (kg/ha)")
 ```
+From the boxplot of our data for the two different site, it is possible that there was effect of treatments on carinata production in different site.
 
 # Statistical model
-We treated **blocks as random effect**
+We treated **blocks within site as random effect** 
 To account for more than one variance component (i.e., random effects and error), we used function `lmer()` from package `lme4`.  
 
 ```{r model}
@@ -294,9 +282,6 @@ summary(rcbd_mix_mod)
 
 
 ```
-The variance attributed to blocks is 11.22, and that still left in the residual error is 306719.25. 
-
-Therefore, blocks are responsible for 11.22 / (11.22 + 306719.25) = **0.0037% of the total noise** in this model.
 
 # ANOVA table  
 ```{r ANOVA}
@@ -341,7 +326,7 @@ randeff_rep <- ranef(rcbd_mix_mod)[[1]]
 randeff_rep
 ```
 
-For random effects with so few levels (i.e., 4 since that's the number of blocks), the QQ plot is one of the only ways to check for assumptions on random effects.  
+For random effects with so few levels (i.e., 8 ), the QQ plot is one of the only ways to check for assumptions on random effects.  
 
 ```{r QQ plot for random effects}
 ggplot(randeff_rep, aes(sample=`(Intercept)`))+
@@ -409,7 +394,7 @@ Since the curve shows a bigger peak around 0, it satisfies the assumption that r
 # h) Model means  
 Let's extract the model means.  
 
-Since the treatment (treat) are significantly different, we extracted it by comparing their means.
+Since there was an intearction effect of site and tretament (treat), we extracted it by comparing their means.
 ```{r treat means}
 rcbd_means_all <- emmeans(rcbd_mix_mod, ~treat:site)
 
@@ -507,7 +492,7 @@ ggplot(mapping = aes(fill = treat)) +
 
 ```
 
-The letters inside the box plots indicate statistical grouping based on different ttreatments used in different site. T5 in Tifton and T5 in Oaks have the highest effect on carinata seed yield production. However, T5 in Tifton and T5 in Oaks have no statistical seed yield difference. T1 in Oaks have the lowest carinata seed yeild. However, T1, T2 and T3 in Oaks have no statistical difference in carinata seed yield production. 
+The letters inside the box plots indicate statistical grouping based on different ttreatments used in different site. T5 in Tifton and T5 in Oaks have the highest effect on carinata seed yield production. However, T5 in Tifton and T5 in Oaks have no statistical seed yield difference. T4 in Tifton have significantly higher carinata yield than T4 in oaks. T1 in Oaks have the lowest carinata seed yeild. However, T1, T2 and T3 in Oaks had significantly lower carianat seed yeild than the T1, T2, and T3 in Tifton. However, there was no statistical difference in carinata seed yield production for T1, t2 and T3 in Oaks. 
 
 ```{r}
 ggsave("../output/rcbd_final_means.png",
@@ -561,6 +546,11 @@ ggplot(interaction_data, aes(x = treat, y = emmean, group = site, color = site))
     panel.grid.minor = element_blank()
   )
 ```
+
+Since we observe an intearction effect of site and treatement on carinata seed yield production, the above interaction plot also explains how different tretament perform differently for the two sites. A parallel line indicating no significant difference and an angular line indicating a significant effect. For T1,T2, T3 and T4, all of them significantly performed better in Tifton than Oaks. Only T5 had similar performane in both location. A possible reason for lower performance of the same tretament in carinata production is the presence of deep sandy soil in live oak (Oaks), FL. Sandy soil have lower CEC (cation exchange capacity) and hold less nutrient we applied. Another reason is the lower water holding capacity significantly effect the overall production of carinata in live oaks (oaks). On the other hand, tifton have sandy loamy soil which significantly help to increase the production of carinata. 
+
+#Conclusions:
+A successful production of carinata in the soueast United States will help to replinish the demand of renewable energy sources and provide an additional off season source of income for our grower. From our experiment we observe that high yield production of carinata is possible with higher rate of nutrient. There was no toxic effect on higher rate of nutrient (T5) since seed yield was highest in both site. Further experiment required to observe at what rate of nutrient carinata show toxic effect. Therefore, we can refine and modify the recommend rate of carinata fertilizer for a succesul production.
 
 ```{r}
 ggsave("../output/rcbd_final_intearction.png",
